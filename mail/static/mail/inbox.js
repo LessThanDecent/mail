@@ -61,11 +61,41 @@ function load_mailbox(mailbox) {
   .then(emails => {
     emails.forEach(email => {
       const element = document.createElement('div');
-      element.innerHTML = `<span><strong>${email.sender}</strong> ${email.subject}</span><span style="color:#959595;float:right;">${email.timestamp}</span>`;
-      element.style.border = "1px solid black";
-      element.style.padding = "5px";
+      element.className = 'email';
+      element.innerHTML = `<strong>${email.sender}</strong> ${email.subject}<span style="color:#959595;float:right;">${email.timestamp}</span>`;
+      element.style.border = '1px solid black';
+      element.style.padding = '5px';
+      element.addEventListener('click', () => {load_email(email.id)})
+
+      if (email.read) {
+        element.style.backgroundColor = '#dcdcdc'
+      }
 
       document.querySelector('#emails-view').append(element);
     })
   })
+}
+
+function load_email(email_id) {
+  document.querySelector('#alert-view').style.display = 'none';
+  document.querySelector('#emails-view').style.display = 'block';
+  document.querySelector('#compose-view').style.display = 'none';
+
+  fetch(`/emails/${email_id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      read: true
+    })
+  });
+
+  fetch(`/emails/${email_id}`)
+  .then(response => response.json())
+  .then(email => {
+    const emails_view = document.querySelector('#emails-view');
+    emails_view.innerHTML = `<p><strong>From:</strong> ${email.sender}</p>`;
+    emails_view.innerHTML += `<p><strong>To:</strong> ${email.recipients.join(', ').trim()}</p>`;
+    emails_view.innerHTML += `<p><strong>Subject:</strong> ${email.subject}</p>`;
+    emails_view.innerHTML += `<p><strong>Timestamp:</strong> ${email.timestamp}</p>`;
+    emails_view.innerHTML += `<hr><p>${email.body}</p>`
+  });
 }
