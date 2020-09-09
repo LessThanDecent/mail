@@ -33,7 +33,6 @@ function compose_email() {
     })
     .then(response => response.json())
     .then(result => {
-      console.log(result);
       if (result["error"]) {
         document.querySelector('#alert-view').style.display = 'block';
         document.querySelector('#alert-view').innerHTML = result["error"];
@@ -58,8 +57,8 @@ function load_mailbox(mailbox) {
 
   fetch(`/emails/${mailbox}`)
   .then(response => response.json())
-  .then(emails => {
-    emails.forEach(email => {
+  .then(monkeys => {
+    monkeys.forEach(email => {
       const element = document.createElement('div');
       element.className = 'email';
       element.innerHTML = `<strong>${email.sender}</strong> ${email.subject}<span style="color:#959595;float:right;">${email.timestamp}</span>`;
@@ -96,6 +95,29 @@ function load_email(email_id) {
     emails_view.innerHTML += `<p><strong>To:</strong> ${email.recipients.join(', ').trim()}</p>`;
     emails_view.innerHTML += `<p><strong>Subject:</strong> ${email.subject}</p>`;
     emails_view.innerHTML += `<p><strong>Timestamp:</strong> ${email.timestamp}</p>`;
-    emails_view.innerHTML += `<hr><p>${email.body}</p>`
+
+    if (email.recipients.includes(document.querySelector('#user-email').innerHTML)) {
+
+      let buttonText;
+      if (email.archived) {
+        buttonText = 'Unarchive';
+      } else {
+        buttonText = 'Archive';
+      }
+
+      emails_view.innerHTML += `<button class="btn btn-sm btn-outline-primary" onclick="archive(${email.id}, ${email.archived});">${buttonText}</button>`;
+    }
+
+    emails_view.innerHTML += `<hr><p>${email.body}</p>`;
   });
+}
+
+function archive(email_id, archived) {
+  fetch(`/emails/${email_id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      archived: !archived
+    })
+  });
+  load_mailbox('inbox');
 }
