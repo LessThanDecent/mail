@@ -57,22 +57,22 @@ function load_mailbox(mailbox) {
 
   fetch(`/emails/${mailbox}`)
   .then(response => response.json())
-  .then(monkeys => {
-    monkeys.forEach(email => {
+  .then(emails => {
+    emails.forEach(email => {
       const element = document.createElement('div');
       element.className = 'email';
       element.innerHTML = `<strong>${email.sender}</strong> ${email.subject}<span style="color:#959595;float:right;">${email.timestamp}</span>`;
       element.style.border = '1px solid black';
       element.style.padding = '5px';
-      element.addEventListener('click', () => {load_email(email.id)})
+      element.addEventListener('click', () => {load_email(email.id)});
 
       if (email.read) {
-        element.style.backgroundColor = '#dcdcdc'
+        element.style.backgroundColor = '#dcdcdc';
       }
 
       document.querySelector('#emails-view').append(element);
     })
-  })
+  });
 }
 
 function load_email(email_id) {
@@ -95,6 +95,8 @@ function load_email(email_id) {
     emails_view.innerHTML += `<p><strong>To:</strong> ${email.recipients.join(', ').trim()}</p>`;
     emails_view.innerHTML += `<p><strong>Subject:</strong> ${email.subject}</p>`;
     emails_view.innerHTML += `<p><strong>Timestamp:</strong> ${email.timestamp}</p>`;
+
+    emails_view.innerHTML += `<button class="btn btn-sm btn-outline-primary" onclick="reply(${email.id});" style="margin-right:5px;">Reply</button>`;
 
     if (email.recipients.includes(document.querySelector('#user-email').innerHTML)) {
 
@@ -120,4 +122,20 @@ function archive(email_id, archived) {
     })
   });
   load_mailbox('inbox');
+}
+
+function reply(email_id) {
+  fetch(`/emails/${email_id}`)
+  .then(response => response.json())
+  .then(email => {
+    compose_email();
+
+    document.querySelector('#compose-recipients').value = email.sender;
+    if (email.subject.startsWith('Re: ')) {
+      document.querySelector('#compose-subject').value = email.subject;
+    } else {
+      document.querySelector('#compose-subject').value = `Re: ${email.subject}`;
+    }
+    document.querySelector('#compose-body').value = `On ${email.timestamp} ${email.sender} wrote:\n${email.body}`;
+  });
 }
